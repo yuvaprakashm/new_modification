@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Vector;
 import net.texala.employee.model.Employee;
-import static net.texala.employee.constants.Constants.NEW_EMPLOYEES_FILE_CREATED;
 import static net.texala.employee.constants.Constants.FILE_NAME;
 import static net.texala.employee.constants.Constants.ERROR_CREATING_NEW_EMPLOYEES_FILE;
 import static net.texala.employee.constants.Constants.CSV_DELIMITER;
@@ -31,12 +30,10 @@ import static net.texala.employee.constants.Constants.INVALID_LAST_NAME_ERROR;
 import static net.texala.employee.constants.Constants.INVALID_LAST_NAME_LOG;
 import static net.texala.employee.constants.Constants.DUPLICATE_EMPID_ERROR;
 import static net.texala.employee.constants.Constants.ALREADY_EXISTS;
-
 import static net.texala.employee.constants.Constants.DUPLICATE_EMPID_LOG;
 import static net.texala.employee.constants.Constants.EMP_ADD;
 import static net.texala.employee.constants.Constants.NAME_REGEX;
 import static net.texala.employee.constants.Constants.ERROR_LOG_FILE;
-
 import static net.texala.employee.constants.Constants.NEW_LINE;
 import static net.texala.employee.constants.Constants.ERROR_WRITING_LOG;
 import static net.texala.employee.constants.Constants.UPDATE_SUCCESS_MESSAGE;
@@ -47,19 +44,14 @@ import static net.texala.employee.constants.Constants.DEPARTMENT_FIELD;
 import static net.texala.employee.constants.Constants.INVALID_FIELD_TO_UPDATE_ERROR;
 import static net.texala.employee.constants.Constants.ENTER_EMPID_TO_DELETE;
 import static net.texala.employee.constants.Constants.DELETION_CANCELLED_MESSAGE;
-
 import static net.texala.employee.constants.Constants.DELETE_ALL_SUCCESS_MESSAGE;
 import static net.texala.employee.constants.Constants.DELETE_ALL;
-import static net.texala.employee.constants.Constants.CONFIRMATION_PROMPT;
-import static net.texala.employee.constants.Constants.YES_NO_PROMPT;
 import static net.texala.employee.constants.Constants.EMPLOYEE_HEADER;
 import static net.texala.employee.constants.Constants.COMMIT_ERROR_MESSAGE;
 import static net.texala.employee.constants.Constants.COMMIT_SUCCESS_MESSAGE;
 import static net.texala.employee.constants.Constants.SORT_BY_PROMPT;
-
 import static net.texala.employee.constants.Constants.SORT_OPTION_EMPID;
 import static net.texala.employee.constants.Constants.SORT_OPTION_FIRST_NAME;
-
 import static net.texala.employee.constants.Constants.SORT_OPTION_LAST_NAME;
 import static net.texala.employee.constants.Constants.ENTER_CHOICE_PROMPT;
 import static net.texala.employee.constants.Constants.INVALID_SORTING_OPTION;
@@ -96,6 +88,10 @@ import static net.texala.employee.constants.Constants.SEMI;
 import static net.texala.employee.constants.Constants.QUIT;
 import static net.texala.employee.constants.Constants.IC;
 import static net.texala.employee.constants.Constants.IN_VALID;
+import static net.texala.employee.constants.Constants.CONFIRMATION_PROMPT_DEL;
+import static net.texala.employee.constants.Constants.EMP;
+import static net.texala.employee.constants.Constants.EMP_NO;
+import static net.texala.employee.constants.Constants.EMP_DEL;
 
 public class EmployeeManager {
 
@@ -103,7 +99,7 @@ public class EmployeeManager {
 	private Vector<Employee> displayedEmployees;
 	private Vector<Employee> deletedEmployees;
 	public Vector<Employee> temporaryVector;
-	 
+
 	public EmployeeManager() {
 		employee = new Vector<>();
 		displayedEmployees = new Vector<>();
@@ -111,16 +107,13 @@ public class EmployeeManager {
 		temporaryVector = new Vector<>();
 
 	}
-	  
 
-     
 	public void loadEmployees() {
 		File file = new File(FILE_NAME);
 
 		if (!file.exists()) {
 			try {
 				file.createNewFile();
-				System.out.println(NEW_EMPLOYEES_FILE_CREATED + FILE_NAME);
 
 			} catch (IOException e) {
 				System.out.println(ERROR_CREATING_NEW_EMPLOYEES_FILE + e.getMessage());
@@ -230,7 +223,7 @@ public class EmployeeManager {
 	public void updateEmployee(int empIdToUpdate, String fieldToUpdate, int newEmpId, String newFirstName,
 			String newLastName, String newDepartment) {
 		boolean employeeFound = false;
-		for (Employee employee : temporaryVector) {
+		for (Employee employee : employee) {
 			if (employee.getEmpId() == empIdToUpdate) {
 				employee.setEmpId(newEmpId);
 				employee.setFirstName(newFirstName);
@@ -248,7 +241,7 @@ public class EmployeeManager {
 
 	public void updateEmployee(int empIdToUpdate, String fieldToUpdate, String newValue) {
 		boolean employeeFound = false;
-		for (Employee employee : temporaryVector) {
+		for (Employee employee : employee) {
 			if (employee.getEmpId() == empIdToUpdate) {
 				switch (fieldToUpdate.toLowerCase()) {
 				case FIRST_NAME_FIELD:
@@ -277,26 +270,17 @@ public class EmployeeManager {
 		System.out.println(ENTER_EMPID_TO_DELETE);
 		int empIdToDelete = scanner.nextInt();
 		scanner.nextLine();
-
-		 boolean employeeFound = false;
-		 Iterator<Employee> iterator = temporaryVector.iterator();
-		    while (iterator.hasNext()) {
-		        Employee employee = iterator.next();
-		        if (employee.getEmpId() == empIdToDelete) {
-		            manager.deleteEmployee(manager, scanner);
-		            iterator.remove();  
-		            employeeFound = true;
-		            break;
-		        }
-		    }
-
-	        if (!employeeFound) {
-	            System.out.println("Employee with ID " + empIdToDelete + " not found.");
-	        } else {
-	            
-	            temporaryVector.clear();
-	        }
-	    }
+		if (!confirmAction(scanner, CONFIRMATION_PROMPT_DEL)) {
+			System.out.println(DELETION_CANCELLED_MESSAGE);
+			return;
+		}
+		boolean employeeFound = manager.deleteEmployeeById(empIdToDelete);
+		if (!employeeFound) {
+			System.out.println(EMP + empIdToDelete + EMP_NO);
+		} else {
+			System.out.println(EMP + empIdToDelete + EMP_DEL);
+		}
+	}
 
 	public void deleteAllEmployees(EmployeeManager manager, Scanner scanner) {
 		if (!confirmAction(scanner, DELETE_ALL)) {
@@ -304,15 +288,15 @@ public class EmployeeManager {
 			return;
 		}
 
-		manager.deleteAllEmployees();
-		temporaryVector.clear();
+		manager.temporaryVector.clear();
+		manager.employee.clear();
 		System.out.println(DELETE_ALL_SUCCESS_MESSAGE);
 	}
 
-	private boolean confirmAction(Scanner scanner, String actionDescription) {
-		System.out.println(CONFIRMATION_PROMPT + actionDescription + YES_NO_PROMPT);
+	private boolean confirmAction(Scanner scanner, String prompt) {
+		System.out.print(prompt);
 		String confirmation = scanner.nextLine().trim().toLowerCase();
-		return confirmation.equals("y");
+		return confirmation.equals("y") || confirmation.equals("yes");
 	}
 
 	public boolean deleteEmployeeById(int empIdToDelete) {
@@ -330,12 +314,15 @@ public class EmployeeManager {
 
 	public void commitChanges() {
 		try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_NAME))) {
+			Collections.sort(employee, Comparator.comparingInt(Employee::getEmpId));
 			writer.println(EMPLOYEE_HEADER);
 			for (Employee emp : employee) {
 				writer.println(emp.getEmpId() + CSV_DELIMITER + emp.getFirstName() + CSV_DELIMITER + emp.getLastName()
 						+ CSV_DELIMITER + emp.getDepartment());
 			}
 			System.out.println(COMMIT_SUCCESS_MESSAGE);
+			temporaryVector.clear();
+			employee.clear();
 		} catch (IOException e) {
 			System.out.println(COMMIT_ERROR_MESSAGE + e.getMessage());
 		}
@@ -372,25 +359,37 @@ public class EmployeeManager {
 		}
 	}
 
-//	public Employee getEmployeeByEmpId(int empId) {
-//
-//		for (Employee emp : employee) {
-//
-//			if (emp.getEmpId() == empId) {
-//				System.out.println(CSV_HEADER);
-//				return emp;
-//			}
-//		}
-//		return null;
-//	}
+	public Employee getEmployeeByEmpId(int empId) {
+
+		for (Employee emp : employee) {
+
+			if (emp.getEmpId() == empId) {
+				System.out.println(CSV_HEADER);
+				return emp;
+			}
+		}
+		return null;
+	}
+
 	public Employee getEmployeeByEmpId(int empId, Vector<Employee> temporaryVector) {
-	    for (Employee emp : temporaryVector) {
-	        if (emp.getEmpId() == empId) {
-	            System.out.println(CSV_HEADER);
-	            return emp;
-	        }
-	    }
-	    return null;
+		for (Employee emp : temporaryVector) {
+			if (emp.getEmpId() == empId) {
+				System.out.println(CSV_HEADER);
+				return emp;
+			}
+		}
+		return null;
+	}
+
+	public Employee getEmployeeByEmpIdDisplay(int empId, Vector<Employee> temporaryVector) {
+		loadEmployees();
+		for (Employee emp : employee) {
+			if (emp.getEmpId() == empId) {
+				System.out.println(CSV_HEADER);
+				return emp;
+			}
+		}
+		return null;
 	}
 
 	public Employee getEmpByEmpId(int empId) {
@@ -421,6 +420,7 @@ public class EmployeeManager {
 	}
 
 	public void displaySortedEmployeeRecords(Vector<Employee> employees, String sortOption) {
+
 		Comparator<Employee> comparator = null;
 
 		switch (sortOption) {
@@ -443,10 +443,12 @@ public class EmployeeManager {
 
 		System.out.println(EMPLOYEE_HEADER);
 		for (Employee emp : employees) {
+
 			System.out.println(emp);
 		}
 
 		storeSortedRecordsInCSV(employees);
+
 	}
 
 	public void displaySortedRecordsByOption(Comparator<Employee> comparator) {
@@ -567,9 +569,11 @@ public class EmployeeManager {
 		}
 		return choice;
 	}
+
 	public List<Employee> getEmployees() {
-        return employee;
-    }
+		return employee;
+	}
+
 	public void displayAllEmployeesWithOption(Scanner scanner) {
 		System.out.println(VECTOR_DATA);
 		System.out.println(DIS_DATA);
@@ -616,16 +620,19 @@ public class EmployeeManager {
 				System.out.println(emp);
 			}
 		}
+		temporaryVector.clear();
 		return new Vector<>(employee);
 	}
+
 	public boolean isEmployeeIdExists(EmployeeManager manager, int empId) {
-	    for (Employee employee : manager.getEmployees()) {
-	        if (employee.getEmpId() == empId) {
-	            return true;  
-	        }
-	    }
-	    return false;  
+		for (Employee employee : manager.getEmployees()) {
+			if (employee.getEmpId() == empId) {
+				return true;
+			}
+		}
+		return false;
 	}
+
 	public void commitAndExit() {
 		saveEmployees();
 		System.out.println(QUIT);
