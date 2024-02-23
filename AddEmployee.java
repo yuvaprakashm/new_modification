@@ -12,6 +12,7 @@ import static net.texala.employee.constants.Constants.ENTER_EMPID;
 import static net.texala.employee.constants.Constants.ENTER_FIRST_NAME;
 import static net.texala.employee.constants.Constants.ENTER_LAST_NAME;
 import static net.texala.employee.constants.Constants.ERROR_ADD_EMPLOYEE;
+import static net.texala.employee.constants.Constants.ERROR;
 
 public class AddEmployee implements EmployeeOperation {
 	 
@@ -41,10 +42,12 @@ public class AddEmployee implements EmployeeOperation {
             String department = manager.selectDepartment(scanner);
 
             System.out.println();
-            manager.addEmployee(empId, firstName, lastName, department);
+            manager.temporaryVector.clear();
             manager.temporaryVector.add(new Employee(empId, firstName, lastName, department));
+            manager.addEmployee(empId, firstName, lastName, department);
+            
         } catch (IllegalArgumentException e) {
-            System.out.println("\nError: " + e.getMessage());
+            System.out.println(ERROR + e.getMessage());
         } catch (Exception e) {
             EmployeeOperationException.throwAddEmployeeException(ERROR_ADD_EMPLOYEE + e.getMessage());
         }
